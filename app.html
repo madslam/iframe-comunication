@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Parent Window</title>
+  </head>
+  <body>
+    <h1>Parent Window</h1>
+    <p>
+      Send Message: <button id="message_button">message to children</button>
+    </p>
+    <p>Receive Message:</p>
+    <div id="results"></div>
+    <br />
+
+    <script>
+      // addEventListener support for IE8
+      function bindEvent(element, eventName, eventHandler) {
+        if (element.addEventListener) {
+          element.addEventListener(eventName, eventHandler, false);
+        }
+      }
+
+      const iframeSourceReact = 'http://localhost:3000/';
+      const iframeSourceVue = 'http://localhost:8080/';
+
+      const createIframe = (source, name) => {
+        // Create the iframe
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('src', source);
+        iframe.setAttribute('id', `the_iframe_${name}`);
+        iframe.style.width = 450 + 'px';
+        iframe.style.height = 200 + 'px';
+        document.body.appendChild(iframe);
+      };
+      createIframe(iframeSourceReact, 'react');
+      createIframe(iframeSourceVue, 'vue');
+
+      // Send a message to the child iframe
+      const iframeReact = document.getElementById(`the_iframe_react`);
+      const iframeVue = document.getElementById(`the_iframe_vue`);
+
+      messageButton = document.getElementById('message_button');
+      results = document.getElementById('results');
+
+      // Send a message to the child iframe
+      const sendMessage = function(msg) {
+        // Make sure you are sending a string, and to stringify JSON
+        iframeReact.contentWindow.postMessage(msg, '*');
+        iframeVue.contentWindow.postMessage(msg, '*');
+      };
+
+      // Send random message to children
+      bindEvent(messageButton, 'click', function(e) {
+        const random = Math.random();
+        const msg = {type: 'app', value: Math.random()};
+        sendMessage(JSON.stringify(msg));
+      });
+
+      // process message from child
+      bindEvent(window, 'message', function(e) {
+        const {type, dest, value} = JSON.parse(e.data);
+        switch (dest) {
+          case 'react':
+            sendMessage(e.data);
+            break;
+
+          case 'vue':
+            sendMessage(e.data);
+            break;
+        }
+        results.innerHTML = e.data;
+      });
+    </script>
+  </body>
+</html>
